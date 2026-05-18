@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MultiTenantSaaS.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MultiTenantSaaS.Domain\MultiTenantSaaS.Domain.csproj" />
+    <ProjectReference Include="..\MultiTenantSaaS.Shared\MultiTenantSaaS.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
