@@ -54,6 +54,42 @@ public class AuthController : ControllerBase
                 title: "Company signup failed");
         }
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponse>> Login(
+        [FromBody] LoginApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            var result = await _authService.LoginAsync(
+                new LoginRequest(request.Email, request.Password, request.TenantSlug),
+                cancellationToken);
+
+            return Ok(new LoginResponse(
+                result.AccessToken,
+                result.ExpiresAt,
+                result.TenantId,
+                result.TenantSlug,
+                result.UserId,
+                result.Email,
+                result.Role));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Login failed");
+        }
+    }
 }
 
 public sealed record CompanySignupApiRequest(
@@ -68,4 +104,15 @@ public sealed record CompanySignupResponse(
     string TenantSlug,
     Guid UserId,
     string AdminEmail,
+    string Role);
+
+public sealed record LoginApiRequest(string Email, string Password, string TenantSlug);
+
+public sealed record LoginResponse(
+    string AccessToken,
+    DateTimeOffset ExpiresAt,
+    Guid TenantId,
+    string TenantSlug,
+    Guid UserId,
+    string Email,
     string Role);

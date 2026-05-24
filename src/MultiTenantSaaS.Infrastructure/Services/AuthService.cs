@@ -12,11 +12,16 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public AuthService(AppDbContext dbContext, UserManager<ApplicationUser> userManager)
+    public AuthService(
+        AppDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        IJwtTokenGenerator jwtTokenGenerator)
     {
         _dbContext = dbContext;
         _userManager = userManager;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<CompanySignupResult> CompanySignupAsync(
@@ -89,5 +94,53 @@ public class AuthService : IAuthService
             user.Id,
             email,
             MembershipRole.TenantAdmin.ToString());
+    }
+
+    public async Task<LoginResult> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+        var tenantSlug = SlugGenerator.From(request.TenantSlug.Trim());
+
+        var tenant = await _dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == tenantSlug, cancellationToken);
+
+        if (tenant is null || !tenant.IsActive)
+        {
+            throw new UnauthorizedAccessException("Invalid email, password, or tenant.");
+        }
+
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
+        {
+            throw new UnauthorizedAccessException("Invalid email, password, or tenant.");
+        }
+
+        var membership = await _dbContext.UserTenantMemberships
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                m => m.UserId == user.Id && m.TenantId == tenant.Id && m.IsActive,
+                cancellationToken);
+
+        if (membership is null)
+        {
+            throw new UnauthorizedAccessException("Invalid email, password, or tenant.");
+        }
+
+        var (accessToken, expiresAt) = _jwtTokenGenerator.GenerateAccessToken(
+            user,
+            tenant,
+            membership.Role);
+
+        return new LoginResult(
+            accessToken,
+            expiresAt,
+            tenant.Id,
+            tenant.Slug,
+            user.Id,
+            email,
+            membership.Role.ToString());
     }
 }
