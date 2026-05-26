@@ -16,6 +16,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<UserTenantMembership> UserTenantMemberships => Set<UserTenantMembership>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -46,6 +48,27 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(u => u.FullName).HasMaxLength(200);
+        });
+
+        builder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(t => t.TokenHash).IsUnique();
+            entity.Property(t => t.IpAddress).HasMaxLength(64);
+            entity.Property(t => t.DeviceInfo).HasMaxLength(500);
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(t => t.Tenant)
+                .WithMany()
+                .HasForeignKey(t => t.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(t => t.ReplacedByToken)
+                .WithMany()
+                .HasForeignKey(t => t.ReplacedByTokenId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

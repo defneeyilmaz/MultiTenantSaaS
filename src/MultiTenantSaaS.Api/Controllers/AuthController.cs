@@ -56,9 +56,9 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthTokensResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<LoginResponse>> Login(
+    public async Task<ActionResult<AuthTokensResponse>> Login(
         [FromBody] LoginApiRequest request,
         CancellationToken cancellationToken)
     {
@@ -73,9 +73,11 @@ public class AuthController : ControllerBase
                 new LoginRequest(request.Email, request.Password, request.TenantSlug),
                 cancellationToken);
 
-            return Ok(new LoginResponse(
+            return Ok(new AuthTokensResponse(
                 result.AccessToken,
-                result.ExpiresAt,
+                result.AccessTokenExpiresAt,
+                result.RefreshToken,
+                result.RefreshTokenExpiresAt,
                 result.TenantId,
                 result.TenantSlug,
                 result.UserId,
@@ -88,6 +90,44 @@ public class AuthController : ControllerBase
                 detail: ex.Message,
                 statusCode: StatusCodes.Status401Unauthorized,
                 title: "Login failed");
+        }
+    }
+
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(AuthTokensResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthTokensResponse>> RefreshToken(
+        [FromBody] RefreshTokenApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            var result = await _authService.RefreshTokenAsync(
+                new RefreshTokenRequest(request.RefreshToken),
+                cancellationToken);
+
+            return Ok(new AuthTokensResponse(
+                result.AccessToken,
+                result.AccessTokenExpiresAt,
+                result.RefreshToken,
+                result.RefreshTokenExpiresAt,
+                result.TenantId,
+                result.TenantSlug,
+                result.UserId,
+                result.Email,
+                result.Role));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Refresh token failed");
         }
     }
 }
@@ -108,9 +148,13 @@ public sealed record CompanySignupResponse(
 
 public sealed record LoginApiRequest(string Email, string Password, string TenantSlug);
 
-public sealed record LoginResponse(
+public sealed record RefreshTokenApiRequest(string RefreshToken);
+
+public sealed record AuthTokensResponse(
     string AccessToken,
-    DateTimeOffset ExpiresAt,
+    DateTimeOffset AccessTokenExpiresAt,
+    string RefreshToken,
+    DateTimeOffset RefreshTokenExpiresAt,
     Guid TenantId,
     string TenantSlug,
     Guid UserId,

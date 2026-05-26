@@ -38,6 +38,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+        services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 

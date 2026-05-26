@@ -1,6 +1,6 @@
 namespace MultiTenantSaaS.Application.Contracts.Auth;
 
-public sealed record LoginResult(
+public sealed record AuthTokensResult(
     string AccessToken,
     DateTimeOffset AccessTokenExpiresAt,
     string RefreshToken,
