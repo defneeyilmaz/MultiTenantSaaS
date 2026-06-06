@@ -13,4 +13,8 @@ public interface IAuthService
     Task<AuthTokensResult> RefreshTokenAsync(
         RefreshTokenRequest request,
         CancellationToken cancellationToken = default);
+
+    Task LogoutAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default);
 }

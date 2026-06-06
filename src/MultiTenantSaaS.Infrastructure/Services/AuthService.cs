@@ -216,6 +216,28 @@ public class AuthService : IAuthService
             membership.Role.ToString());
     }
 
+    public async Task LogoutAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return;
+        }
+
+        var tokenHash = RefreshTokenHasher.Hash(request.RefreshToken.Trim());
+        var storedToken = await _dbContext.RefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
+
+        if (storedToken is null || storedToken.RevokedAt is not null)
+        {
+            return;
+        }
+
+        storedToken.RevokedAt = DateTimeOffset.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task<(ApplicationUser User, Tenant Tenant, UserTenantMembership Membership)> ValidateCredentialsAsync(
         string email,
         string password,

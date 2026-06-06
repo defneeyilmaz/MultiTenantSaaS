@@ -130,6 +130,24 @@ public class AuthController : ControllerBase
                 title: "Refresh token failed");
         }
     }
+
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout(
+        [FromBody] RefreshTokenApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        await _authService.LogoutAsync(
+            new RefreshTokenRequest(request.RefreshToken),
+            cancellationToken);
+
+        return NoContent();
+    }
 }
 
 public sealed record CompanySignupApiRequest(
