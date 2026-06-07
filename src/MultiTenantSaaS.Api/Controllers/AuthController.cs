@@ -148,6 +148,53 @@ public class AuthController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        await _authService.ForgotPasswordAsync(
+            new ForgotPasswordRequest(request.Email),
+            cancellationToken);
+
+        return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            await _authService.ResetPasswordAsync(
+                new ResetPasswordRequest(request.Email, request.Token, request.NewPassword),
+                cancellationToken);
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Password reset failed");
+        }
+    }
 }
 
 public sealed record CompanySignupApiRequest(
@@ -167,6 +214,10 @@ public sealed record CompanySignupResponse(
 public sealed record LoginApiRequest(string Email, string Password, string TenantSlug);
 
 public sealed record RefreshTokenApiRequest(string RefreshToken);
+
+public sealed record ForgotPasswordApiRequest(string Email);
+
+public sealed record ResetPasswordApiRequest(string Email, string Token, string NewPassword);
 
 public sealed record AuthTokensResponse(
     string AccessToken,

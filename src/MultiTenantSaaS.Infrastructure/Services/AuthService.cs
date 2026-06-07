@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MultiTenantSaaS.Application.Contracts.Auth;
 using MultiTenantSaaS.Domain.Entities;
@@ -20,19 +21,22 @@ public class AuthService : IAuthService
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly JwtOptions _jwtOptions;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         AppDbContext dbContext,
         UserManager<ApplicationUser> userManager,
         IJwtTokenGenerator jwtTokenGenerator,
         IHttpContextAccessor httpContextAccessor,
-        IOptions<JwtOptions> jwtOptions)
+        IOptions<JwtOptions> jwtOptions,
+        ILogger<AuthService> logger)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _jwtTokenGenerator = jwtTokenGenerator;
         _httpContextAccessor = httpContextAccessor;
         _jwtOptions = jwtOptions.Value;
+        _logger = logger;
     }
 
     public async Task<CompanySignupResult> CompanySignupAsync(
@@ -236,6 +240,52 @@ public class AuthService : IAuthService
 
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return;
+        }
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            return;
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        _logger.LogInformation(
+            "Password reset token generated for {Email}. Token: {Token}",
+            email,
+            token);
+    }
+
+    public async Task ResetPasswordAsync(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            throw new InvalidOperationException("Invalid password reset request.");
+        }
+
+        var result = await _userManager.ResetPasswordAsync(
+            user,
+            request.Token.Trim(),
+            request.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException(errors);
+        }
     }
 
     private async Task<(ApplicationUser User, Tenant Tenant, UserTenantMembership Membership)> ValidateCredentialsAsync(
