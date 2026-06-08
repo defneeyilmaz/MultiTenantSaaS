@@ -78,7 +78,7 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(),
             UserName = email,
             Email = email,
-            EmailConfirmed = true,
+            EmailConfirmed = false,
             FullName = request.AdminFullName?.Trim(),
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -102,6 +102,12 @@ public class AuthService : IAuthService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        _logger.LogInformation(
+            "Email confirmation token generated for {Email}. Token: {Token}",
+            email,
+            confirmationToken);
 
         return new CompanySignupResult(
             tenant.Id,
@@ -288,6 +294,30 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task VerifyEmailAsync(
+        VerifyEmailRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            throw new InvalidOperationException("Invalid email verification request.");
+        }
+
+        if (user.EmailConfirmed)
+        {
+            return;
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, request.Token.Trim());
+        if (!result.Succeeded)
+        {
+            var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException(errors);
+        }
+    }
+
     private async Task<(ApplicationUser User, Tenant Tenant, UserTenantMembership Membership)> ValidateCredentialsAsync(
         string email,
         string password,
@@ -307,6 +337,11 @@ public class AuthService : IAuthService
         if (user is null || !await _userManager.CheckPasswordAsync(user, password))
         {
             throw new UnauthorizedAccessException("Invalid email, password, or tenant.");
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            throw new UnauthorizedAccessException("Email address is not verified.");
         }
 
         var membership = await _dbContext.UserTenantMemberships

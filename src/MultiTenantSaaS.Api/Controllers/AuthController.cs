@@ -195,6 +195,35 @@ public class AuthController : ControllerBase
                 title: "Password reset failed");
         }
     }
+
+    [HttpPost("verify-email")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyEmail(
+        [FromBody] VerifyEmailApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            await _authService.VerifyEmailAsync(
+                new VerifyEmailRequest(request.Email, request.Token),
+                cancellationToken);
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Email verification failed");
+        }
+    }
 }
 
 public sealed record CompanySignupApiRequest(
@@ -218,6 +247,8 @@ public sealed record RefreshTokenApiRequest(string RefreshToken);
 public sealed record ForgotPasswordApiRequest(string Email);
 
 public sealed record ResetPasswordApiRequest(string Email, string Token, string NewPassword);
+
+public sealed record VerifyEmailApiRequest(string Email, string Token);
 
 public sealed record AuthTokensResponse(
     string AccessToken,

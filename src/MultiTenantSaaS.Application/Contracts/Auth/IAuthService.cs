@@ -25,4 +25,8 @@ public interface IAuthService
     Task ResetPasswordAsync(
         ResetPasswordRequest request,
         CancellationToken cancellationToken = default);
+
+    Task VerifyEmailAsync(
+        VerifyEmailRequest request,
+        CancellationToken cancellationToken = default);
 }
