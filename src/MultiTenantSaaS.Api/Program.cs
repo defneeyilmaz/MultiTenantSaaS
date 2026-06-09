@@ -1,4 +1,5 @@
 using MultiTenantSaaS.Infrastructure;
+using MultiTenantSaaS.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseTenantMiddleware();
 app.UseAuthorization();
 app.MapControllers();
 

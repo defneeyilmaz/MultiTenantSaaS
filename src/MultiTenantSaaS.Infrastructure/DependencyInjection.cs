@@ -6,10 +6,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenantSaaS.Application.Contracts.Auth;
+using MultiTenantSaaS.Application.Contracts.Tenancy;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Options;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Services;
+using MultiTenantSaaS.Infrastructure.Tenancy;
 
 namespace MultiTenantSaaS.Infrastructure;
 
@@ -39,6 +41,7 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.AddHttpContextAccessor();
+        services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 

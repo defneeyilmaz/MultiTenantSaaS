@@ -7,6 +7,7 @@ using MultiTenantSaaS.Application.Contracts.Auth;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Infrastructure.Options;
+using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.Infrastructure.Services;
 
@@ -29,8 +30,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-            new("tenant_id", tenant.Id.ToString()),
-            new("tenant_slug", tenant.Slug),
+            new(AppConstants.TenantIdClaim, tenant.Id.ToString()),
+            new(AppConstants.TenantSlugClaim, tenant.Slug),
             new(ClaimTypes.Role, role.ToString())
         };
 

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MultiTenantSaaS.Application\MultiTenantSaaS.Application.csproj" />
     <ProjectReference Include="..\MultiTenantSaaS.Domain\MultiTenantSaaS.Domain.csproj" />
+    <ProjectReference Include="..\MultiTenantSaaS.Shared\MultiTenantSaaS.Shared.csproj" />
   </ItemGroup>
 
 </Project>
