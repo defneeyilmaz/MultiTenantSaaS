@@ -1,6 +1,8 @@
+using MultiTenantSaaS.Domain.Common;
+
 namespace MultiTenantSaaS.Domain.Entities;
 
-public class RefreshToken
+public class RefreshToken : ITenantEntity
 {
     public Guid Id { get; set; }
 

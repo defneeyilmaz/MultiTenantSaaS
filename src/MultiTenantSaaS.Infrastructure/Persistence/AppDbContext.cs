@@ -1,15 +1,22 @@
+using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MultiTenantSaaS.Application.Contracts.Tenancy;
+using MultiTenantSaaS.Domain.Common;
 using MultiTenantSaaS.Domain.Entities;
 
 namespace MultiTenantSaaS.Infrastructure.Persistence;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private readonly ITenantContext _tenantContext;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenantContext)
         : base(options)
     {
+        _tenantContext = tenantContext;
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -70,5 +77,31 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
                 .HasForeignKey(t => t.ReplacedByTokenId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
+
+        ApplyTenantQueryFilters(builder);
+    }
+
+    private void ApplyTenantQueryFilters(ModelBuilder builder)
+    {
+        foreach (var entityType in builder.Model.GetEntityTypes()
+            .Where(type => typeof(ITenantEntity).IsAssignableFrom(type.ClrType)))
+        {
+            var method = typeof(AppDbContext)
+                .GetMethod(nameof(ConfigureTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance)!
+                .MakeGenericMethod(entityType.ClrType);
+            method.Invoke(this, new object[] { builder });
+        }
+    }
+
+    private void ConfigureTenantFilter<TEntity>(ModelBuilder builder)
+        where TEntity : class, ITenantEntity
+    {
+        builder.Entity<TEntity>().HasQueryFilter(CreateTenantFilter<TEntity>());
+    }
+
+    private Expression<Func<TEntity, bool>> CreateTenantFilter<TEntity>()
+        where TEntity : class, ITenantEntity
+    {
+        return entity => _tenantContext.TenantId == null || entity.TenantId == _tenantContext.TenantId;
     }
 }
