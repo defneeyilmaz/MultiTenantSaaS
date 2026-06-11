@@ -6,7 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenantSaaS.Application.Contracts.Auth;
+using MultiTenantSaaS.Application.Contracts.Projects;
+using MultiTenantSaaS.Application.Contracts.Tasks;
 using MultiTenantSaaS.Application.Contracts.Tenancy;
+using MultiTenantSaaS.Application.Contracts.Tenants;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Options;
 using MultiTenantSaaS.Infrastructure.Persistence;
@@ -43,6 +46,9 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<ITenantService, TenantService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

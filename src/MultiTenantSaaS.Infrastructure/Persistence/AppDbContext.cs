@@ -25,6 +25,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<Project> Projects => Set<Project>();
+
+    public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -34,6 +38,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             entity.HasKey(t => t.Id);
             entity.Property(t => t.Name).HasMaxLength(200).IsRequired();
             entity.Property(t => t.Slug).HasMaxLength(100).IsRequired();
+            entity.Property(t => t.Domain).HasMaxLength(255);
             entity.HasIndex(t => t.Slug).IsUnique();
         });
 
@@ -75,6 +80,38 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             entity.HasOne(t => t.ReplacedByToken)
                 .WithMany()
                 .HasForeignKey(t => t.ReplacedByTokenId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Project>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).HasMaxLength(200).IsRequired();
+            entity.Property(p => p.Description).HasMaxLength(2000);
+            entity.HasOne(p => p.Tenant)
+                .WithMany()
+                .HasForeignKey(p => p.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ProjectTask>(entity =>
+        {
+            entity.ToTable("Tasks");
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Title).HasMaxLength(200).IsRequired();
+            entity.Property(t => t.Description).HasMaxLength(2000);
+            entity.Property(t => t.Status).HasConversion<string>().HasMaxLength(50);
+            entity.HasOne(t => t.Project)
+                .WithMany(p => p.Tasks)
+                .HasForeignKey(t => t.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(t => t.Tenant)
+                .WithMany()
+                .HasForeignKey(t => t.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(t => t.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToUserId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

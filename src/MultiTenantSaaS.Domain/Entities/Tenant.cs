@@ -8,6 +8,8 @@ public class Tenant
 
     public string Slug { get; set; } = string.Empty;
 
+    public string? Domain { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAt { get; set; }
