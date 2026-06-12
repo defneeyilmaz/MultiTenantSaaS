@@ -32,8 +32,7 @@ public class TaskService : ITaskService
             query = query.Where(t => t.ProjectId == projectId);
         }
 
-        return await query
-            .OrderByDescending(t => t.CreatedAt)
+        var tasks = await query
             .Select(t => new TaskDto(
                 t.Id,
                 t.ProjectId,
@@ -43,6 +42,10 @@ public class TaskService : ITaskService
                 t.AssignedToUserId,
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
+
+        return tasks
+            .OrderByDescending(t => t.CreatedAt)
+            .ToList();
     }
 
     public async Task<TaskDto> CreateAsync(

@@ -21,12 +21,15 @@ public class ProjectService : IProjectService
     {
         var tenantId = GetRequiredTenantId();
 
-        return await _dbContext.Projects
+        var projects = await _dbContext.Projects
             .AsNoTracking()
             .Where(p => p.TenantId == tenantId)
-            .OrderByDescending(p => p.CreatedAt)
             .Select(p => new ProjectDto(p.Id, p.Name, p.Description, p.CreatedAt))
             .ToListAsync(cancellationToken);
+
+        return projects
+            .OrderByDescending(p => p.CreatedAt)
+            .ToList();
     }
 
     public async Task<ProjectDto> CreateAsync(

@@ -4,14 +4,26 @@ using Xunit;
 
 namespace MultiTenantSaaS.IntegrationTests;
 
-public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthEndpointTests : IClassFixture<IntegrationTestWebApplicationFactory>, IAsyncLifetime
 {
     private readonly HttpClient _client;
+    private readonly IntegrationTestWebApplicationFactory _factory;
 
-    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthEndpointTests(IntegrationTestWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _factory = factory;
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
     }
+
+    public async Task InitializeAsync()
+    {
+        await _factory.InitializeDatabaseAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Health_ReturnsOk()
