@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Persistence;
+using MultiTenantSaaS.Infrastructure.Persistence.Seed;
 
 namespace MultiTenantSaaS.IntegrationTests;
 
@@ -38,6 +39,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         using var scope = Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await dbContext.Database.EnsureCreatedAsync();
+        await AuthorizationSeedData.SeedAsync(dbContext);
     }
 
     public async Task ConfirmEmailAsync(string email)

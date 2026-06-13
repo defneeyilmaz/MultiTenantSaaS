@@ -29,6 +29,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
 
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<AppRole> AppRoles => Set<AppRole>();
+
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -113,6 +119,36 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
                 .WithMany()
                 .HasForeignKey(t => t.AssignedToUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).HasMaxLength(100).IsRequired();
+            entity.Property(p => p.Description).HasMaxLength(500);
+            entity.HasIndex(p => p.Name).IsUnique();
+        });
+
+        builder.Entity<AppRole>(entity =>
+        {
+            entity.ToTable("Roles");
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Name).HasMaxLength(50).IsRequired();
+            entity.Property(r => r.Description).HasMaxLength(500);
+            entity.HasIndex(r => r.Name).IsUnique();
+        });
+
+        builder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(rp => new { rp.RoleId, rp.PermissionId });
+            entity.HasOne(rp => rp.Role)
+                .WithMany(r => r.RolePermissions)
+                .HasForeignKey(rp => rp.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantQueryFilters(builder);
