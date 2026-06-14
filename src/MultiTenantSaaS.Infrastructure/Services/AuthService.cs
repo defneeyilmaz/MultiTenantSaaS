@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MultiTenantSaaS.Application.Contracts.Auth;
+using MultiTenantSaaS.Application.Contracts.Authorization;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Infrastructure.Options;
@@ -22,6 +23,7 @@ public class AuthService : IAuthService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly JwtOptions _jwtOptions;
     private readonly ILogger<AuthService> _logger;
+    private readonly IPermissionResolver _permissionResolver;
 
     public AuthService(
         AppDbContext dbContext,
@@ -29,7 +31,8 @@ public class AuthService : IAuthService
         IJwtTokenGenerator jwtTokenGenerator,
         IHttpContextAccessor httpContextAccessor,
         IOptions<JwtOptions> jwtOptions,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IPermissionResolver permissionResolver)
     {
         _dbContext = dbContext;
         _userManager = userManager;
@@ -37,6 +40,7 @@ public class AuthService : IAuthService
         _httpContextAccessor = httpContextAccessor;
         _jwtOptions = jwtOptions.Value;
         _logger = logger;
+        _permissionResolver = permissionResolver;
     }
 
     public async Task<CompanySignupResult> CompanySignupAsync(
@@ -207,10 +211,15 @@ public class AuthService : IAuthService
         _dbContext.RefreshTokens.Add(newRefreshEntity);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        var permissions = await _permissionResolver.GetPermissionsForRoleAsync(
+            membership.Role.ToString(),
+            cancellationToken);
+
         var (accessToken, accessExpiresAt) = _jwtTokenGenerator.GenerateAccessToken(
             user,
             tenant,
-            membership.Role);
+            membership.Role,
+            permissions);
 
         await transaction.CommitAsync(cancellationToken);
 
@@ -364,7 +373,15 @@ public class AuthService : IAuthService
         MembershipRole role,
         CancellationToken cancellationToken)
     {
-        var (accessToken, accessExpiresAt) = _jwtTokenGenerator.GenerateAccessToken(user, tenant, role);
+        var permissions = await _permissionResolver.GetPermissionsForRoleAsync(
+            role.ToString(),
+            cancellationToken);
+
+        var (accessToken, accessExpiresAt) = _jwtTokenGenerator.GenerateAccessToken(
+            user,
+            tenant,
+            role,
+            permissions);
         var (plainRefreshToken, refreshEntity) = CreateRefreshTokenEntity(user.Id, tenant.Id);
 
         _dbContext.RefreshTokens.Add(refreshEntity);

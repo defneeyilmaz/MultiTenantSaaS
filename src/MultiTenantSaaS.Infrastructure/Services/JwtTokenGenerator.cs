@@ -23,7 +23,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
     public (string Token, DateTimeOffset ExpiresAt) GenerateAccessToken(
         ApplicationUser user,
         Tenant tenant,
-        MembershipRole role)
+        MembershipRole role,
+        IReadOnlyList<string> permissions)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenMinutes);
         var claims = new List<Claim>
@@ -34,6 +35,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new(AppConstants.TenantSlugClaim, tenant.Slug),
             new(ClaimTypes.Role, role.ToString())
         };
+
+        claims.AddRange(permissions.Select(permission => new Claim(AppConstants.PermissionClaim, permission)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -1,4 +1,5 @@
 using System.Net;
+using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Shared.Constants;
 using Xunit;
 
@@ -19,6 +20,9 @@ public class TenantIsolationTests
     [Fact]
     public async Task AuthenticatedUser_WithMismatchedTenantHeader_ReturnsForbidden()
     {
+        await ApiTestHelper.SetMembershipRoleAsync(
+            _fixture.Factory.Services, "admin@acme.com", MembershipRole.Manager);
+
         var acmeToken = await ApiTestHelper.LoginAsync(
             _fixture.Client, "admin@acme.com", Password, "acme");
         await ApiTestHelper.CreateProjectAsync(_fixture.Client, acmeToken, "acme", "Acme Project");
@@ -35,6 +39,11 @@ public class TenantIsolationTests
     [Fact]
     public async Task TenantUsers_OnlySeeProjectsFromTheirOwnTenant()
     {
+        await ApiTestHelper.SetMembershipRoleAsync(
+            _fixture.Factory.Services, "admin@acme.com", MembershipRole.Manager);
+        await ApiTestHelper.SetMembershipRoleAsync(
+            _fixture.Factory.Services, "admin@globex.com", MembershipRole.Manager);
+
         var acmeToken = await ApiTestHelper.LoginAsync(
             _fixture.Client, "admin@acme.com", Password, "acme");
         var globexToken = await ApiTestHelper.LoginAsync(

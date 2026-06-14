@@ -9,4 +9,6 @@ public static class AppConstants
     public const string TenantIdClaim = "tenant_id";
 
     public const string TenantSlugClaim = "tenant_slug";
+
+    public const string PermissionClaim = "permissions";
 }

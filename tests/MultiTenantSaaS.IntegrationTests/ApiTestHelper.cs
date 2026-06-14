@@ -1,5 +1,9 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MultiTenantSaaS.Domain.Enums;
+using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.IntegrationTests;
@@ -75,16 +79,18 @@ internal static class ApiTestHelper
         return (await response.Content.ReadFromJsonAsync<List<ProjectResponse>>())!;
     }
 
-    public static async Task<HttpResponseMessage> ListProjectsRawAsync(
-        HttpClient client,
-        string accessToken,
-        string tenantSlug)
+    public static async Task SetMembershipRoleAsync(
+        IServiceProvider services,
+        string email,
+        MembershipRole role)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/projects");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        request.Headers.Add(AppConstants.TenantSlugHeader, tenantSlug);
-
-        return await client.SendAsync(request);
+        using var scope = services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await dbContext.Users.SingleAsync(u => u.Email == normalizedEmail);
+        var membership = await dbContext.UserTenantMemberships.SingleAsync(m => m.UserId == user.Id);
+        membership.Role = role;
+        await dbContext.SaveChangesAsync();
     }
 
     private sealed record AuthTokensResponse(string AccessToken);

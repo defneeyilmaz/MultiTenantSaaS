@@ -8,5 +8,6 @@ public interface IJwtTokenGenerator
     (string Token, DateTimeOffset ExpiresAt) GenerateAccessToken(
         ApplicationUser user,
         Tenant tenant,
-        MembershipRole role);
+        MembershipRole role,
+        IReadOnlyList<string> permissions);
 }

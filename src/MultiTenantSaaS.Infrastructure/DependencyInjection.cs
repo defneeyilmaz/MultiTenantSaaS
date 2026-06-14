@@ -1,16 +1,19 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MultiTenantSaaS.Application.Contracts.Auth;
+using MultiTenantSaaS.Application.Contracts.Authorization;
 using MultiTenantSaaS.Application.Contracts.Projects;
 using MultiTenantSaaS.Application.Contracts.Tasks;
 using MultiTenantSaaS.Application.Contracts.Tenancy;
 using MultiTenantSaaS.Application.Contracts.Tenants;
 using MultiTenantSaaS.Domain.Entities;
+using MultiTenantSaaS.Infrastructure.Authorization;
 using MultiTenantSaaS.Infrastructure.Options;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Services;
@@ -49,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<ITenantService, TenantService>();
+        services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
@@ -81,6 +85,8 @@ public static class DependencyInjection
                 };
             });
 
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddAuthorization();
 
         return services;

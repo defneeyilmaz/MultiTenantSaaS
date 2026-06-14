@@ -24,4 +24,25 @@ public static class PermissionNames
     public const string RolesManage = "roles.manage";
     public const string RolesView = "roles.view";
     public const string PermissionsView = "permissions.view";
+
+    public static IReadOnlyList<string> All { get; } =
+    [
+        UsersInvite,
+        UsersManage,
+        UsersView,
+        ProjectsCreate,
+        ProjectsView,
+        ProjectsManage,
+        TasksCreate,
+        TasksView,
+        TasksManage,
+        TasksUpdateStatus,
+        AuditView,
+        SettingsManage,
+        TenantsManage,
+        TenantsView,
+        RolesManage,
+        RolesView,
+        PermissionsView
+    ];
 }

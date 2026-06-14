@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MultiTenantSaaS.Application.Contracts.Tenants;
+using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.Api.Controllers;
 
@@ -36,6 +37,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPut("current/settings")]
+    [Authorize(Policy = PermissionPolicies.SettingsManage)]
     [ProducesResponseType(typeof(TenantDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TenantDto>> UpdateSettings(

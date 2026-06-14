@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MultiTenantSaaS.Application.Contracts.Tasks;
+using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.Api.Controllers;
 
@@ -17,6 +18,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = PermissionPolicies.TasksView)]
     [ProducesResponseType(typeof(IReadOnlyList<TaskDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TaskDto>>> List(
         [FromQuery] Guid? projectId,
@@ -27,6 +29,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = PermissionPolicies.TasksCreate)]
     [ProducesResponseType(typeof(TaskDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TaskDto>> Create(
@@ -53,6 +56,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Policy = PermissionPolicies.TasksUpdateStatus)]
     [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
