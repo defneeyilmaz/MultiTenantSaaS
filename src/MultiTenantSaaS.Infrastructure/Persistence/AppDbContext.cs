@@ -35,6 +35,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -148,6 +150,24 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
             entity.HasOne(rp => rp.Permission)
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Invitation>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.Email).HasMaxLength(256).IsRequired();
+            entity.Property(i => i.Role).HasConversion<string>().HasMaxLength(50);
+            entity.Property(i => i.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(i => i.TokenHash).IsUnique();
+            entity.HasIndex(i => new { i.TenantId, i.Email });
+            entity.HasOne(i => i.Tenant)
+                .WithMany()
+                .HasForeignKey(i => i.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(i => i.InvitedByUser)
+                .WithMany()
+                .HasForeignKey(i => i.InvitedByUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

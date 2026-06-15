@@ -12,6 +12,7 @@ using MultiTenantSaaS.Application.Contracts.Projects;
 using MultiTenantSaaS.Application.Contracts.Tasks;
 using MultiTenantSaaS.Application.Contracts.Tenancy;
 using MultiTenantSaaS.Application.Contracts.Tenants;
+using MultiTenantSaaS.Application.Contracts.Users;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Authorization;
 using MultiTenantSaaS.Infrastructure.Options;
@@ -52,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<ITenantService, TenantService>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
