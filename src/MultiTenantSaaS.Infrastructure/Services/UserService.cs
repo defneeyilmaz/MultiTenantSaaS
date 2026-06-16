@@ -188,6 +188,117 @@ public class UserService : IUserService
             invitation.Role.ToString());
     }
 
+    public async Task<IReadOnlyList<TenantUserDto>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var tenantId = GetRequiredTenantId();
+
+        var users = await _dbContext.UserTenantMemberships
+            .AsNoTracking()
+            .Where(m => m.TenantId == tenantId)
+            .Join(
+                _dbContext.Users.AsNoTracking(),
+                membership => membership.UserId,
+                user => user.Id,
+                (membership, user) => new TenantUserDto(
+                    user.Id,
+                    user.Email ?? string.Empty,
+                    user.FullName,
+                    membership.Role.ToString(),
+                    membership.IsActive,
+                    membership.JoinedAt))
+            .ToListAsync(cancellationToken);
+
+        return users
+            .OrderByDescending(user => user.IsActive)
+            .ThenBy(user => user.Email)
+            .ToList();
+    }
+
+    public async Task<TenantUserDto> AssignRoleAsync(
+        Guid userId,
+        AssignUserRoleRequest request,
+        Guid actingUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == actingUserId)
+        {
+            throw new InvalidOperationException("You cannot change your own role.");
+        }
+
+        if (!Enum.TryParse<MembershipRole>(request.Role.Trim(), true, out var role)
+            || !InvitableRoles.Contains(role))
+        {
+            throw new InvalidOperationException("Invalid role.");
+        }
+
+        var membership = await GetMembershipAsync(userId, cancellationToken);
+        membership.Role = role;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await MapToTenantUserDtoAsync(membership, cancellationToken);
+    }
+
+    public async Task<TenantUserDto> DisableAsync(
+        Guid userId,
+        Guid actingUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == actingUserId)
+        {
+            throw new InvalidOperationException("You cannot disable your own account.");
+        }
+
+        var membership = await GetMembershipAsync(userId, cancellationToken);
+
+        if (!membership.IsActive)
+        {
+            throw new InvalidOperationException("User is already disabled.");
+        }
+
+        membership.IsActive = false;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await MapToTenantUserDtoAsync(membership, cancellationToken);
+    }
+
+    private async Task<UserTenantMembership> GetMembershipAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = GetRequiredTenantId();
+
+        var membership = await _dbContext.UserTenantMemberships
+            .FirstOrDefaultAsync(
+                m => m.UserId == userId && m.TenantId == tenantId,
+                cancellationToken);
+
+        if (membership is null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        return membership;
+    }
+
+    private async Task<TenantUserDto> MapToTenantUserDtoAsync(
+        UserTenantMembership membership,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(membership.UserId.ToString());
+        if (user is null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        return new TenantUserDto(
+            user.Id,
+            user.Email ?? string.Empty,
+            user.FullName,
+            membership.Role.ToString(),
+            membership.IsActive,
+            membership.JoinedAt);
+    }
+
     private Guid GetRequiredTenantId() =>
         _tenantContext.TenantId
         ?? throw new InvalidOperationException("Tenant context is not set.");

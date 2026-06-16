@@ -2,8 +2,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Infrastructure.Persistence;
+using MultiTenantSaaS.Infrastructure.Security;
 using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.IntegrationTests;
@@ -93,7 +95,52 @@ internal static class ApiTestHelper
         await dbContext.SaveChangesAsync();
     }
 
+    public static async Task<Guid> AcceptInvitedUserAsync(
+        TenantIsolationFixture fixture,
+        string tenantSlug,
+        string email,
+        MembershipRole role,
+        string inviterEmail)
+    {
+        const string invitationToken = "user-management-invitation-token";
+
+        using (var scope = fixture.Factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var tenant = await dbContext.Tenants.SingleAsync(t => t.Slug == tenantSlug);
+            var inviter = await dbContext.Users.SingleAsync(u => u.Email == inviterEmail);
+
+            dbContext.Invitations.Add(new Invitation
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenant.Id,
+                Email = email,
+                Role = role,
+                TokenHash = RefreshTokenHasher.Hash(invitationToken),
+                CreatedAt = DateTimeOffset.UtcNow,
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(7),
+                InvitedByUserId = inviter.Id
+            });
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await fixture.Client.PostAsJsonAsync("/api/users/accept-invitation", new
+        {
+            email,
+            token = invitationToken,
+            password = "Password1",
+            fullName = "Tenant Member"
+        });
+
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<AcceptInvitationResponse>();
+        return result!.UserId;
+    }
+
     private sealed record AuthTokensResponse(string AccessToken);
+
+    private sealed record AcceptInvitationResponse(Guid UserId);
 
     internal sealed record ProjectResponse(Guid Id, string Name, string? Description, DateTimeOffset CreatedAt);
 }

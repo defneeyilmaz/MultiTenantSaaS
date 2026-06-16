@@ -10,4 +10,17 @@ public interface IUserService
     Task<AcceptInvitationResult> AcceptInvitationAsync(
         AcceptInvitationRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TenantUserDto>> ListAsync(CancellationToken cancellationToken = default);
+
+    Task<TenantUserDto> AssignRoleAsync(
+        Guid userId,
+        AssignUserRoleRequest request,
+        Guid actingUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<TenantUserDto> DisableAsync(
+        Guid userId,
+        Guid actingUserId,
+        CancellationToken cancellationToken = default);
 }

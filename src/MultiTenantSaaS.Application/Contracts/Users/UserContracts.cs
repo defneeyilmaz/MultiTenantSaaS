@@ -20,3 +20,13 @@ public sealed record AcceptInvitationResult(
     Guid TenantId,
     string TenantSlug,
     string Role);
+
+public sealed record TenantUserDto(
+    Guid UserId,
+    string Email,
+    string? FullName,
+    string Role,
+    bool IsActive,
+    DateTimeOffset JoinedAt);
+
+public sealed record AssignUserRoleRequest(string Role);
