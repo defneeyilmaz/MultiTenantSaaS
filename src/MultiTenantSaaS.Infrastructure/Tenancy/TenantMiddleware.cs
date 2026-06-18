@@ -135,7 +135,8 @@ public class TenantMiddleware
         }
 
         return path.StartsWithSegments("/api/auth", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWithSegments("/api/users/accept-invitation", StringComparison.OrdinalIgnoreCase);
+            || path.StartsWithSegments("/api/users/accept-invitation", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWithSegments("/api/platform", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? ResolveTenantSlug(HttpContext context)
