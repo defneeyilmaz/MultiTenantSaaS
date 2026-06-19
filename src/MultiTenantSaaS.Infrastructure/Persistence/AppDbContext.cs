@@ -37,6 +37,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
 
     public DbSet<Invitation> Invitations => Set<Invitation>();
 
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -169,6 +171,24 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
                 .WithMany()
                 .HasForeignKey(i => i.InvitedByUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(log => log.Id);
+            entity.Property(log => log.Action).HasMaxLength(100).IsRequired();
+            entity.Property(log => log.EntityType).HasMaxLength(100);
+            entity.Property(log => log.Details).HasMaxLength(2000);
+            entity.Property(log => log.IpAddress).HasMaxLength(64);
+            entity.HasIndex(log => new { log.TenantId, log.CreatedAt });
+            entity.HasOne(log => log.Tenant)
+                .WithMany()
+                .HasForeignKey(log => log.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(log => log.ActorUser)
+                .WithMany()
+                .HasForeignKey(log => log.ActorUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         ApplyTenantQueryFilters(builder);

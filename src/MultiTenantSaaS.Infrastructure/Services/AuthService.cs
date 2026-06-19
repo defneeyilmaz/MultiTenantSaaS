@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MultiTenantSaaS.Application.Contracts.Audit;
 using MultiTenantSaaS.Application.Contracts.Auth;
 using MultiTenantSaaS.Application.Contracts.Authorization;
 using MultiTenantSaaS.Domain.Entities;
@@ -11,6 +12,7 @@ using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Infrastructure.Options;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Security;
+using MultiTenantSaaS.Shared.Constants;
 using MultiTenantSaaS.Shared.Utilities;
 
 namespace MultiTenantSaaS.Infrastructure.Services;
@@ -24,6 +26,7 @@ public class AuthService : IAuthService
     private readonly JwtOptions _jwtOptions;
     private readonly ILogger<AuthService> _logger;
     private readonly IPermissionResolver _permissionResolver;
+    private readonly IAuditService _auditService;
 
     public AuthService(
         AppDbContext dbContext,
@@ -32,7 +35,8 @@ public class AuthService : IAuthService
         IHttpContextAccessor httpContextAccessor,
         IOptions<JwtOptions> jwtOptions,
         ILogger<AuthService> logger,
-        IPermissionResolver permissionResolver)
+        IPermissionResolver permissionResolver,
+        IAuditService auditService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
@@ -41,6 +45,7 @@ public class AuthService : IAuthService
         _jwtOptions = jwtOptions.Value;
         _logger = logger;
         _permissionResolver = permissionResolver;
+        _auditService = auditService;
     }
 
     public async Task<CompanySignupResult> CompanySignupAsync(
@@ -135,6 +140,15 @@ public class AuthService : IAuthService
             cancellationToken);
 
         var tokens = await IssueTokensAsync(user, tenant, membership.Role, cancellationToken);
+
+        await _auditService.LogAsync(
+            AuditActions.AuthLogin,
+            details: $"User {email} logged in.",
+            entityType: nameof(ApplicationUser),
+            entityId: user.Id,
+            tenantId: tenant.Id,
+            actorUserId: user.Id,
+            cancellationToken: cancellationToken);
 
         return new LoginResult(
             tokens.AccessToken,
@@ -255,6 +269,15 @@ public class AuthService : IAuthService
 
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _auditService.LogAsync(
+            AuditActions.AuthLogout,
+            details: "User logged out.",
+            entityType: nameof(RefreshToken),
+            entityId: storedToken.Id,
+            tenantId: storedToken.TenantId,
+            actorUserId: storedToken.UserId,
+            cancellationToken: cancellationToken);
     }
 
     public async Task ForgotPasswordAsync(

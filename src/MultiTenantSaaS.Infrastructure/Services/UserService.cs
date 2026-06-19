@@ -2,12 +2,14 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MultiTenantSaaS.Application.Contracts.Audit;
 using MultiTenantSaaS.Application.Contracts.Tenancy;
 using MultiTenantSaaS.Application.Contracts.Users;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Domain.Enums;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Security;
+using MultiTenantSaaS.Shared.Constants;
 
 namespace MultiTenantSaaS.Infrastructure.Services;
 
@@ -24,17 +26,20 @@ public class UserService : IUserService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ITenantContext _tenantContext;
     private readonly ILogger<UserService> _logger;
+    private readonly IAuditService _auditService;
 
     public UserService(
         AppDbContext dbContext,
         UserManager<ApplicationUser> userManager,
         ITenantContext tenantContext,
-        ILogger<UserService> logger)
+        ILogger<UserService> logger,
+        IAuditService auditService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _tenantContext = tenantContext;
         _logger = logger;
+        _auditService = auditService;
     }
 
     public async Task<InvitationDto> InviteAsync(
@@ -102,6 +107,15 @@ public class UserService : IUserService
             email,
             tenantId,
             plainToken);
+
+        await _auditService.LogAsync(
+            AuditActions.UserInvited,
+            details: $"Invited {email} as {role}.",
+            entityType: nameof(Invitation),
+            entityId: invitation.Id,
+            tenantId: tenantId,
+            actorUserId: invitedByUserId,
+            cancellationToken: cancellationToken);
 
         return new InvitationDto(
             invitation.Id,
@@ -180,6 +194,15 @@ public class UserService : IUserService
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
+        await _auditService.LogAsync(
+            AuditActions.UserInvitationAccepted,
+            details: $"User {email} accepted invitation.",
+            entityType: nameof(Invitation),
+            entityId: invitation.Id,
+            tenantId: invitation.TenantId,
+            actorUserId: user.Id,
+            cancellationToken: cancellationToken);
+
         return new AcceptInvitationResult(
             user.Id,
             email,
@@ -235,6 +258,15 @@ public class UserService : IUserService
         membership.Role = role;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        await _auditService.LogAsync(
+            AuditActions.UserRoleAssigned,
+            details: $"Assigned role {role} to user {userId}.",
+            entityType: nameof(UserTenantMembership),
+            entityId: membership.Id,
+            tenantId: membership.TenantId,
+            actorUserId: actingUserId,
+            cancellationToken: cancellationToken);
+
         return await MapToTenantUserDtoAsync(membership, cancellationToken);
     }
 
@@ -257,6 +289,15 @@ public class UserService : IUserService
 
         membership.IsActive = false;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _auditService.LogAsync(
+            AuditActions.UserDisabled,
+            details: $"Disabled user {userId}.",
+            entityType: nameof(UserTenantMembership),
+            entityId: membership.Id,
+            tenantId: membership.TenantId,
+            actorUserId: actingUserId,
+            cancellationToken: cancellationToken);
 
         return await MapToTenantUserDtoAsync(membership, cancellationToken);
     }

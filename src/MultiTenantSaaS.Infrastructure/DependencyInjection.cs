@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using MultiTenantSaaS.Application.Contracts.Audit;
 using MultiTenantSaaS.Application.Contracts.Auth;
 using MultiTenantSaaS.Application.Contracts.Authorization;
 using MultiTenantSaaS.Application.Contracts.Platform;
@@ -58,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPlatformTenantService, PlatformTenantService>();
+        services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 

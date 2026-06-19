@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using MultiTenantSaaS.Application.Contracts.Audit;
 using MultiTenantSaaS.Application.Contracts.Platform;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Persistence;
+using MultiTenantSaaS.Shared.Constants;
 using MultiTenantSaaS.Shared.Utilities;
 
 namespace MultiTenantSaaS.Infrastructure.Services;
@@ -9,10 +11,12 @@ namespace MultiTenantSaaS.Infrastructure.Services;
 public class PlatformTenantService : IPlatformTenantService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IAuditService _auditService;
 
-    public PlatformTenantService(AppDbContext dbContext)
+    public PlatformTenantService(AppDbContext dbContext, IAuditService auditService)
     {
         _dbContext = dbContext;
+        _auditService = auditService;
     }
 
     public async Task<IReadOnlyList<PlatformTenantDto>> ListAsync(
@@ -62,6 +66,14 @@ public class PlatformTenantService : IPlatformTenantService
         _dbContext.Tenants.Add(tenant);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        await _auditService.LogAsync(
+            AuditActions.PlatformTenantCreated,
+            details: $"Created tenant {tenant.Name} ({tenant.Slug}).",
+            entityType: nameof(Tenant),
+            entityId: tenant.Id,
+            tenantId: tenant.Id,
+            cancellationToken: cancellationToken);
+
         return MapToDto(tenant);
     }
 
@@ -100,6 +112,18 @@ public class PlatformTenantService : IPlatformTenantService
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var details = request.IsActive == false
+            ? $"Disabled tenant {tenant.Name}."
+            : $"Updated tenant {tenant.Name}.";
+
+        await _auditService.LogAsync(
+            AuditActions.PlatformTenantUpdated,
+            details: details,
+            entityType: nameof(Tenant),
+            entityId: tenant.Id,
+            tenantId: tenant.Id,
+            cancellationToken: cancellationToken);
 
         return MapToDto(tenant);
     }
