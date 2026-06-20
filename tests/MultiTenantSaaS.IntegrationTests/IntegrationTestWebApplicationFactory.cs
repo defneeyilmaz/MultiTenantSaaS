@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MultiTenantSaaS.Application.Contracts.Security;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Persistence.Seed;
+using MultiTenantSaaS.Infrastructure.Security;
 
 namespace MultiTenantSaaS.IntegrationTests;
 
@@ -25,9 +28,25 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
     {
         builder.UseEnvironment("Development");
 
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Redis"] = "memory",
+                ["RateLimit:LoginPermitLimit"] = "10",
+                ["RateLimit:LoginWindowSeconds"] = "60",
+                ["RateLimit:RefreshPermitLimit"] = "3",
+                ["RateLimit:RefreshWindowSeconds"] = "60",
+                ["Identity:MaxFailedAttempts"] = "5",
+                ["Identity:LockoutMinutes"] = "15"
+            });
+        });
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDbContext>>();
+            services.RemoveAll<IRateLimitService>();
+            services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(_connection));

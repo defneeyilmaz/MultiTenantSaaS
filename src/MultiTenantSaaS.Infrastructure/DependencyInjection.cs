@@ -18,7 +18,10 @@ using MultiTenantSaaS.Application.Contracts.Tenants;
 using MultiTenantSaaS.Application.Contracts.Users;
 using MultiTenantSaaS.Domain.Entities;
 using MultiTenantSaaS.Infrastructure.Authorization;
+using MultiTenantSaaS.Application.Contracts.Security;
 using MultiTenantSaaS.Infrastructure.Options;
+using MultiTenantSaaS.Infrastructure.Security;
+using StackExchange.Redis;
 using MultiTenantSaaS.Infrastructure.Persistence;
 using MultiTenantSaaS.Infrastructure.Services;
 using MultiTenantSaaS.Infrastructure.Tenancy;
@@ -46,6 +49,14 @@ public static class DependencyInjection
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 8;
                 options.User.RequireUniqueEmail = true;
+
+                var lockoutOptions = configuration
+                    .GetSection(IdentityLockoutOptions.SectionName)
+                    .Get<IdentityLockoutOptions>() ?? new IdentityLockoutOptions();
+
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = lockoutOptions.MaxFailedAttempts;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(lockoutOptions.LockoutMinutes);
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
@@ -64,6 +75,22 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<RateLimitOptions>(configuration.GetSection(RateLimitOptions.SectionName));
+        services.Configure<IdentityLockoutOptions>(configuration.GetSection(IdentityLockoutOptions.SectionName));
+
+        var redisConnection = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrWhiteSpace(redisConnection)
+            && !string.Equals(redisConnection, "memory", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(redisConnection));
+            services.AddSingleton<IRateLimitService, RedisRateLimitService>();
+        }
+        else
+        {
+            services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
+        }
+
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
             ?? throw new InvalidOperationException($"Configuration section '{JwtOptions.SectionName}' is missing.");
 

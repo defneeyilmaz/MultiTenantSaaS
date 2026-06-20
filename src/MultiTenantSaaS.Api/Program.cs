@@ -1,4 +1,5 @@
 using MultiTenantSaaS.Infrastructure;
+using MultiTenantSaaS.Infrastructure.Security;
 using MultiTenantSaaS.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthRateLimit();
 app.UseAuthentication();
 app.UseTenantMiddleware();
 app.UseAuthorization();

@@ -366,10 +366,22 @@ public class AuthService : IAuthService
         }
 
         var user = await _userManager.FindByEmailAsync(email);
+        if (user is not null && await _userManager.IsLockedOutAsync(user))
+        {
+            throw new UnauthorizedAccessException("Account is temporarily locked. Try again later.");
+        }
+
         if (user is null || !await _userManager.CheckPasswordAsync(user, password))
         {
+            if (user is not null)
+            {
+                await _userManager.AccessFailedAsync(user);
+            }
+
             throw new UnauthorizedAccessException("Invalid email, password, or tenant.");
         }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         if (!user.EmailConfirmed)
         {
