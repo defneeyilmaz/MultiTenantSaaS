@@ -37,6 +37,16 @@ internal static class ApiTestHelper
         string password,
         string tenantSlug)
     {
+        var tokens = await LoginWithTokensAsync(client, email, password, tenantSlug);
+        return tokens.AccessToken;
+    }
+
+    public static async Task<AuthTokensResponse> LoginWithTokensAsync(
+        HttpClient client,
+        string email,
+        string password,
+        string tenantSlug)
+    {
         var response = await client.PostAsJsonAsync("/api/auth/login", new
         {
             email,
@@ -45,8 +55,17 @@ internal static class ApiTestHelper
         });
 
         response.EnsureSuccessStatusCode();
-        var tokens = await response.Content.ReadFromJsonAsync<AuthTokensResponse>();
-        return tokens!.AccessToken;
+        return (await response.Content.ReadFromJsonAsync<AuthTokensResponse>())!;
+    }
+
+    public static async Task<HttpResponseMessage> RefreshTokenAsync(
+        HttpClient client,
+        string refreshToken)
+    {
+        return await client.PostAsJsonAsync("/api/auth/refresh-token", new
+        {
+            refreshToken
+        });
     }
 
     public static async Task<ProjectResponse> CreateProjectAsync(
@@ -138,7 +157,16 @@ internal static class ApiTestHelper
         return result!.UserId;
     }
 
-    private sealed record AuthTokensResponse(string AccessToken);
+    internal sealed record AuthTokensResponse(
+        string AccessToken,
+        DateTimeOffset AccessTokenExpiresAt,
+        string RefreshToken,
+        DateTimeOffset RefreshTokenExpiresAt,
+        Guid TenantId,
+        string TenantSlug,
+        Guid UserId,
+        string Email,
+        string Role);
 
     private sealed record AcceptInvitationResponse(Guid UserId);
 

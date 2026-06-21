@@ -4,6 +4,7 @@ public static class AuditActions
 {
     public const string AuthLogin = "auth.login";
     public const string AuthLogout = "auth.logout";
+    public const string AuthRefreshTokenReuse = "auth.refresh_token_reuse";
 
     public const string UserInvited = "user.invited";
     public const string UserInvitationAccepted = "user.invitation_accepted";

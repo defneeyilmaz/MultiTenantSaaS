@@ -182,6 +182,11 @@ public class AuthService : IAuthService
 
         if (storedToken.RevokedAt is not null)
         {
+            if (storedToken.ReplacedByTokenId is not null)
+            {
+                await HandleRefreshTokenReuseAsync(storedToken, cancellationToken);
+            }
+
             throw new UnauthorizedAccessException("Invalid or expired refresh token.");
         }
 
@@ -465,5 +470,36 @@ public class AuthService : IAuthService
         var ip = context.Connection.RemoteIpAddress?.ToString();
         var device = context.Request.Headers.UserAgent.ToString();
         return (ip, string.IsNullOrWhiteSpace(device) ? null : device[..Math.Min(device.Length, 500)]);
+    }
+
+    private async Task HandleRefreshTokenReuseAsync(
+        RefreshToken reusedToken,
+        CancellationToken cancellationToken)
+    {
+        var utcNow = DateTimeOffset.UtcNow;
+        var activeTokens = await _dbContext.RefreshTokens
+            .Where(token =>
+                token.UserId == reusedToken.UserId
+                && token.TenantId == reusedToken.TenantId
+                && token.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = utcNow;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _auditService.LogAsync(
+            AuditActions.AuthRefreshTokenReuse,
+            details: "Refresh token reuse detected. All active sessions revoked.",
+            entityType: nameof(RefreshToken),
+            entityId: reusedToken.Id,
+            tenantId: reusedToken.TenantId,
+            actorUserId: reusedToken.UserId,
+            cancellationToken: cancellationToken);
+
+        throw new UnauthorizedAccessException("Invalid or expired refresh token.");
     }
 }
