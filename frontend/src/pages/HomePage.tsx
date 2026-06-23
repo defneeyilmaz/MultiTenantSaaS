@@ -12,13 +12,13 @@ export function HomePage() {
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
-        <p className="text-sm font-medium text-sky-400">Phase 6 / #23</p>
+        <p className="text-sm font-medium text-sky-400">Phase 6 / #24</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          React + Vite + Tailwind app shell
+          Public auth pages
         </h2>
         <p className="mt-3 max-w-2xl text-slate-400">
-          Frontend scaffold is ready. Next steps will add public auth pages, tenant admin
-          dashboard, and user workspace screens on top of this shell.
+          Login, signup, password reset, and invitation acceptance are wired to the API.
+          Tenant admin and user workspace screens come next.
         </p>
       </div>
 
@@ -40,16 +40,22 @@ export function HomePage() {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          to="/auth"
+          to="/login"
           className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-sky-400"
         >
-          Go to auth shell
+          Sign in
+        </Link>
+        <Link
+          to="/signup"
+          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
+        >
+          Create workspace
         </Link>
         <Link
           to="/app"
           className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
-          Go to app shell
+          App area
         </Link>
       </div>
     </section>

@@ -1,4 +1,11 @@
+import { Navigate } from 'react-router-dom';
+import { isAuthenticated } from '@/lib/authStorage';
+
 export function AppAreaPage() {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <section className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/30 p-8">
       <p className="text-sm font-medium text-sky-400">Authenticated area</p>
