@@ -55,3 +55,14 @@ export async function acceptInvitation(input: {
 
   return response.data;
 }
+
+export async function logout(): Promise<void> {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (refreshToken) {
+    try {
+      await apiClient.post('/api/auth/logout', { refreshToken });
+    } catch {
+      // Clear local session even if the server call fails.
+    }
+  }
+}

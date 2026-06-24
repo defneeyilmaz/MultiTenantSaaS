@@ -23,3 +23,19 @@ export function clearAuthTokens(): void {
 export function isAuthenticated(): boolean {
   return Boolean(localStorage.getItem(keys.accessToken));
 }
+
+export function getStoredEmail(): string | null {
+  return localStorage.getItem(keys.email);
+}
+
+export function getStoredRole(): string | null {
+  return localStorage.getItem(keys.role);
+}
+
+export function getStoredTenantSlug(): string | null {
+  return localStorage.getItem(keys.tenantSlug);
+}
+
+export function getAccessToken(): string | null {
+  return localStorage.getItem(keys.accessToken);
+}

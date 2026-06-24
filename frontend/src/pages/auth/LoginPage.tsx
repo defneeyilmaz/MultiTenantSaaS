@@ -23,7 +23,7 @@ export function LoginPage() {
     try {
       const tokens = await login(email.trim(), password, tenantSlug.trim());
       saveAuthTokens(tokens);
-      navigate('/app');
+      navigate('/app/admin');
     } catch (submitError) {
       setError(getApiErrorMessage(submitError, 'Login failed.'));
     } finally {

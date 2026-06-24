@@ -12,13 +12,13 @@ export function HomePage() {
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
-        <p className="text-sm font-medium text-sky-400">Phase 6 / #24</p>
+        <p className="text-sm font-medium text-sky-400">Phase 6 / #25</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Public auth pages
+          Tenant admin dashboard
         </h2>
         <p className="mt-3 max-w-2xl text-slate-400">
-          Login, signup, password reset, and invitation acceptance are wired to the API.
-          Tenant admin and user workspace screens come next.
+          Manage users, roles, audit logs, and workspace settings from the admin console.
+          User project and task screens come next.
         </p>
       </div>
 
@@ -52,10 +52,10 @@ export function HomePage() {
           Create workspace
         </Link>
         <Link
-          to="/app"
+          to="/app/admin"
           className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
-          App area
+          Admin console
         </Link>
       </div>
     </section>
