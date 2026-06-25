@@ -12,13 +12,13 @@ export function HomePage() {
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
-        <p className="text-sm font-medium text-sky-400">Phase 6 / #25</p>
+        <p className="text-sm font-medium text-sky-400">Phase 6 / #26</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Tenant admin dashboard
+          User workspace
         </h2>
         <p className="mt-3 max-w-2xl text-slate-400">
-          Manage users, roles, audit logs, and workspace settings from the admin console.
-          User project and task screens come next.
+          Projects, tasks, and profile screens are wired to the tenant APIs. Platform admin UI
+          and documentation come next.
         </p>
       </div>
 
@@ -50,6 +50,12 @@ export function HomePage() {
           className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
           Create workspace
+        </Link>
+        <Link
+          to="/app/workspace"
+          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
+        >
+          Workspace
         </Link>
         <Link
           to="/app/admin"

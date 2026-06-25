@@ -4,6 +4,8 @@ const keys = {
   accessToken: 'accessToken',
   refreshToken: 'refreshToken',
   tenantSlug: 'tenantSlug',
+  tenantId: 'tenantId',
+  userId: 'userId',
   email: 'email',
   role: 'role',
 } as const;
@@ -12,6 +14,8 @@ export function saveAuthTokens(tokens: AuthTokens): void {
   localStorage.setItem(keys.accessToken, tokens.accessToken);
   localStorage.setItem(keys.refreshToken, tokens.refreshToken);
   localStorage.setItem(keys.tenantSlug, tokens.tenantSlug);
+  localStorage.setItem(keys.tenantId, tokens.tenantId);
+  localStorage.setItem(keys.userId, tokens.userId);
   localStorage.setItem(keys.email, tokens.email);
   localStorage.setItem(keys.role, tokens.role);
 }
@@ -34,6 +38,14 @@ export function getStoredRole(): string | null {
 
 export function getStoredTenantSlug(): string | null {
   return localStorage.getItem(keys.tenantSlug);
+}
+
+export function getStoredTenantId(): string | null {
+  return localStorage.getItem(keys.tenantId);
+}
+
+export function getStoredUserId(): string | null {
+  return localStorage.getItem(keys.userId);
 }
 
 export function getAccessToken(): string | null {

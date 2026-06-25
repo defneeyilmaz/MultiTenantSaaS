@@ -3,6 +3,7 @@ import { RequireAuth } from '@/components/auth/RequireAuth';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { AppShell } from '@/components/layout/AppShell';
+import { WorkspaceLayout } from '@/components/layout/WorkspaceLayout';
 import { HomePage } from '@/pages/HomePage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogsPage } from '@/pages/admin/AuditLogsPage';
@@ -14,6 +15,10 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { SignupPage } from '@/pages/auth/SignupPage';
+import { ProfilePage } from '@/pages/workspace/ProfilePage';
+import { ProjectsPage } from '@/pages/workspace/ProjectsPage';
+import { TasksPage } from '@/pages/workspace/TasksPage';
+import { WorkspaceOverviewPage } from '@/pages/workspace/WorkspaceOverviewPage';
 
 export default function App() {
   return (
@@ -29,7 +34,13 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="app" element={<RequireAuth />}>
-          <Route index element={<Navigate to="/app/admin" replace />} />
+          <Route index element={<Navigate to="/app/workspace" replace />} />
+          <Route path="workspace" element={<WorkspaceLayout />}>
+            <Route index element={<WorkspaceOverviewPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminOverviewPage />} />
             <Route path="users" element={<UsersPage />} />

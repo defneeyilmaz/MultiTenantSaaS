@@ -10,6 +10,7 @@ import { SecondaryButton } from '@/components/ui/FormField';
 
 const navItems = [
   { to: '/', label: 'Home', end: true },
+  { to: '/app/workspace', label: 'Workspace' },
   { to: '/app/admin', label: 'Admin' },
 ];
 
