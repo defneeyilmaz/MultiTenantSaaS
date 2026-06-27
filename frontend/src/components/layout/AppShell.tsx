@@ -6,9 +6,10 @@ import {
   getStoredTenantSlug,
   isAuthenticated,
 } from '@/lib/authStorage';
+import { hasPermission } from '@/lib/permissions';
 import { SecondaryButton } from '@/components/ui/FormField';
 
-const navItems = [
+const baseNavItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/app/workspace', label: 'Workspace' },
   { to: '/app/admin', label: 'Admin' },
@@ -17,6 +18,10 @@ const navItems = [
 export function AppShell() {
   const navigate = useNavigate();
   const signedIn = isAuthenticated();
+
+  const navItems = hasPermission('tenants.view')
+    ? [...baseNavItems, { to: '/app/platform', label: 'Platform', end: false as const }]
+    : baseNavItems;
 
   async function handleLogout() {
     await logout();

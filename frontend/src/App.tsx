@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { AppShell } from '@/components/layout/AppShell';
 import { WorkspaceLayout } from '@/components/layout/WorkspaceLayout';
+import { PlatformLayout } from '@/components/layout/PlatformLayout';
 import { HomePage } from '@/pages/HomePage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogsPage } from '@/pages/admin/AuditLogsPage';
@@ -19,6 +20,8 @@ import { ProfilePage } from '@/pages/workspace/ProfilePage';
 import { ProjectsPage } from '@/pages/workspace/ProjectsPage';
 import { TasksPage } from '@/pages/workspace/TasksPage';
 import { WorkspaceOverviewPage } from '@/pages/workspace/WorkspaceOverviewPage';
+import { PlatformOverviewPage } from '@/pages/platform/PlatformOverviewPage';
+import { TenantsPage } from '@/pages/platform/TenantsPage';
 
 export default function App() {
   return (
@@ -47,6 +50,10 @@ export default function App() {
             <Route path="roles" element={<RolesPage />} />
             <Route path="audit" element={<AuditLogsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="platform" element={<PlatformLayout />}>
+            <Route index element={<PlatformOverviewPage />} />
+            <Route path="tenants" element={<TenantsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

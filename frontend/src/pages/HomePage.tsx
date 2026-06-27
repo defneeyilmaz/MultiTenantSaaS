@@ -12,13 +12,13 @@ export function HomePage() {
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
-        <p className="text-sm font-medium text-sky-400">Phase 6 / #26</p>
+        <p className="text-sm font-medium text-sky-400">Phase 6 / #27</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          User workspace
+          Platform admin UI
         </h2>
         <p className="mt-3 max-w-2xl text-slate-400">
-          Projects, tasks, and profile screens are wired to the tenant APIs. Platform admin UI
-          and documentation come next.
+          Platform operators can manage the tenant directory. Documentation and Docker full
+          stack setup come next.
         </p>
       </div>
 
@@ -62,6 +62,12 @@ export function HomePage() {
           className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
         >
           Admin console
+        </Link>
+        <Link
+          to="/app/platform"
+          className="rounded-lg border border-violet-700/50 px-4 py-2 text-sm font-medium text-violet-200 transition hover:border-violet-500 hover:bg-violet-500/10"
+        >
+          Platform admin
         </Link>
       </div>
     </section>
