@@ -16,6 +16,7 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { SignupPage } from '@/pages/auth/SignupPage';
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
 import { ProfilePage } from '@/pages/workspace/ProfilePage';
 import { ProjectsPage } from '@/pages/workspace/ProjectsPage';
 import { TasksPage } from '@/pages/workspace/TasksPage';
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="signup" element={<SignupPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="accept-invitation" element={<AcceptInvitationPage />} />
       </Route>
 

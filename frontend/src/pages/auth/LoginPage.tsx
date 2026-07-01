@@ -44,6 +44,11 @@ export function LoginPage() {
             </Link>
           </p>
           <p>
+            <Link to="/verify-email" className="text-sky-400 hover:text-sky-300">
+              Verify email
+            </Link>
+          </p>
+          <p>
             <Link to="/forgot-password" className="text-sky-400 hover:text-sky-300">
               Forgot password?
             </Link>

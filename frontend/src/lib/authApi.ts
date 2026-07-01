@@ -42,6 +42,13 @@ export async function resetPassword(input: {
   await apiClient.post('/api/auth/reset-password', input);
 }
 
+export async function verifyEmail(email: string, token: string): Promise<void> {
+  await apiClient.post('/api/auth/verify-email', {
+    email: email.trim(),
+    token: token.trim(),
+  });
+}
+
 export async function acceptInvitation(input: {
   email: string;
   token: string;

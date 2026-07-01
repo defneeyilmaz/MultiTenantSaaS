@@ -14,12 +14,14 @@ export function SignupPage() {
   const [adminPassword, setAdminPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [signupEmail, setSignupEmail] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+    setSignupEmail(null);
     setIsSubmitting(true);
 
     try {
@@ -31,6 +33,7 @@ export function SignupPage() {
         adminPassword,
       });
 
+      setSignupEmail(adminEmail.trim());
       setSuccess(
         `Workspace "${result.tenantSlug}" created. Verify your email before signing in.`,
       );
@@ -56,7 +59,19 @@ export function SignupPage() {
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         {error ? <Alert tone="error">{error}</Alert> : null}
-        {success ? <Alert tone="success">{success}</Alert> : null}
+        {success ? (
+          <Alert tone="success">
+            {success}{' '}
+            {signupEmail ? (
+              <Link
+                to={`/verify-email?email=${encodeURIComponent(signupEmail)}`}
+                className="font-medium text-emerald-100 underline"
+              >
+                Go to verification
+              </Link>
+            ) : null}
+          </Alert>
+        ) : null}
 
         <FormField label="Company name">
           <TextInput

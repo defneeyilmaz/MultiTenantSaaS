@@ -10,7 +10,7 @@ Defaults match `src/MultiTenantSaaS.Api/appsettings.json`:
 
 | Service  | Port |
 |----------|------|
-| Postgres | 5432 |
+| Postgres | 5433 |
 | Redis    | 6379 |
 
 Stop:
